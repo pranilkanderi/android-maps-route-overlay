@@ -3,6 +3,8 @@ package com.mokriya.andevcon;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -25,7 +27,9 @@ public class GoogleMapActivity extends MapActivity {
 	private MapView mapView;
 	private MapController mapController;
 	private MyLocOverlay myLocationOverlay;
+	private PushPinOverlay pushPinOverlay;
 	private RouteOverlay myRouteOverlay;
+	public boolean markSample;
 	
 	@Override
 	protected void onCreate(Bundle icicle) {
@@ -45,6 +49,10 @@ public class GoogleMapActivity extends MapActivity {
 		myLocationOverlay.enableMyLocation();
 		mapView.getOverlays().add(myLocationOverlay);
 
+		// Create a Pushpin/marker overlay
+		pushPinOverlay = new PushPinOverlay();
+		mapView.getOverlays().add(pushPinOverlay);
+		
 		//Create a Route overlay
 		myRouteOverlay = new RouteOverlay();
 		mapView.getOverlays().add(myRouteOverlay);
@@ -72,6 +80,7 @@ public class GoogleMapActivity extends MapActivity {
 		super.onCreateOptionsMenu(menu);
 
 		menu.add(1, 100, 1, "My Location");
+		menu.add(1, 101, 2, "Place Marker");
 		return true;
 	}
 
@@ -86,6 +95,11 @@ public class GoogleMapActivity extends MapActivity {
 				mapController.setCenter(new GeoPoint((int)(37.5569 * 1E6), (int)(-122.3006 * 1E6)));
 			}
 			break;
+		case 101:
+			markSample = true;
+			mapView.invalidate();
+			break;
+				
 		}
 		return true;
 	}
@@ -107,6 +121,23 @@ public class GoogleMapActivity extends MapActivity {
 				GeoPoint arg3, long arg4) {
 		}
 		
+	}
+	
+	class PushPinOverlay extends Overlay {
+		private GeoPoint geoPoint;
+		
+		public void draw(Canvas canvas, MapView mapView, boolean shadow) {
+			if (markSample && !shadow && myLocationOverlay.getMyLocation() != null) {
+				markSample = false;
+				geoPoint = myLocationOverlay.getMyLocation();
+			}
+			
+			if (geoPoint != null) {
+				Bitmap pushpin = BitmapFactory.decodeResource(GoogleMapActivity.this.getResources(), R.drawable.pushpin);
+				Point point = mapView.getProjection().toPixels(geoPoint, null);
+				canvas.drawBitmap(pushpin, point.x, point.y-pushpin.getHeight(), new Paint());
+			}
+		}
 	}
 	
 	class RouteOverlay extends Overlay {
